@@ -20,6 +20,7 @@
 
             stdbool
             bs:enum
+            bs:unknow
             enum-metadata?
             enum-metadata-field-alist
             .descriptor
@@ -37,6 +38,18 @@
     (bytestructure-descriptor-size struct))
    0
    struct))
+
+(define (bs:unknow)
+  "please only use by bs:pointer"
+  (make-bytestructure-descriptor
+   0 0
+   #f
+   (lambda (syntax? bytevector offset)
+     (if syntax?
+         #`(ffi:bytevector->pointer #,bytevector #,offset)
+         (ffi:bytevector->pointer bytevector offset)))
+   (lambda (syntax? bytevector offset value)
+     (error "Can't writing into bs:unknow descriptor" value))))
 
 ;;; <stdbool.h>
 
