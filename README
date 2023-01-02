@@ -1,0 +1,56 @@
+# -*- mode: org -*-
+#+begin_src scheme
+  (use-modules (bytestructures guile)
+               (bytestructure-class))
+  (define %wl-list-struct
+    (bs:struct
+     `((prev ,(bs:pointer (delay %wl-list-struct)))
+       (next ,(bs:pointer (delay %wl-list-struct))))))
+  (define-bytestructure-class <wl-list> ()
+    %wl-list-struct
+    wrap-wl-list unwrap-wl-list wl-list?
+    (prev #:accessor .prev)
+    (next #:accessor .next))
+
+
+  (define %wl-signal-struct
+    (bs:struct `((listener-list ,%wl-list-struct))))
+  (define-bytestructure-class <wl-signal> ()
+    %wl-signal-struct wrap-wl-signal unwrap-wl-signal wl-signal?
+    (listener-list #:accessor .listener-list))
+  ;; (.listener-list (wrap-wl-signal a-pointer)) => return a <wl-list>.
+#+end_src
+
+* 3 new descriptor.
+** bs:unknow
+use by descriptor only
+Can't use bytestructure-set! for it.
+#+begin_src c
+  struct wl_client;
+#+end_src
+
+#+begin_src scheme
+  (define %wl-client-struct (bs:unknow))
+#+end_src
+
+
+** bs:enum
+
+#+begin_src scheme
+  (define enum (bs:enum '(A (B 2))))
+  (define enum-1 (bytestructure enum 'A))
+  (define enum-2 (bytestructure enum 2))
+  (bytestructure-ref enum-1) ;; => 'A
+  (bytestructure-ref enum-2) ;; => 'B
+  (bytestructure-set! enum-1 'B) ;; enum-1: 'B
+  (bytestructure-set! enum-2 0) ;; enum-2: 'A
+#+end_src
+
+** stdbool
+
+#+begin_src scheme
+  (define bool (bytestructure stdbool))
+  (bytestructure-ref bool) ;; => #f
+  (bytestructure-set! bool #t) ;; bool: #t
+  (bytestructure-ref bool) ;; => #t
+#+end_src
