@@ -20,6 +20,7 @@
 
             stdbool
             bs:enum
+            bs:enum->integer
             bs:unknow
             enum-metadata?
             enum-metadata-field-alist
@@ -116,6 +117,20 @@
         (bytevector-s8-set! bytevector offset (to-value value))))
   (make-bytestructure-descriptor
    4 4 #f getter setter meta))
+
+(define (bs:enum->integer enum value)
+  (let ((alist (enum-metadata-field-alist
+                (bytestructure-descriptor-metadata enum))))
+    (cond ((integer? value)
+           (or (assq-ref alist value)
+               (error "value is not valid" value))
+           value)
+          ((symbol? value)
+           (or (or-map (lambda (a)
+                         (if (eq? value (cdr a))
+                             (car a)
+                             #f)) alist)
+               (error "~a is not valid" value))))))
 
 ;; class
 

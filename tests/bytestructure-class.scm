@@ -31,6 +31,18 @@
               (bs:enum '((A 2)
                          (B 2)))))
 
+(test-group "bs:enum->integer"
+  (define enum
+    (bs:enum '((A 1)
+               (B 2))))
+  (test-eq "symbol"
+    1
+    (bs:enum->integer enum 'A))
+  (test-error "not symbol" #t
+              (bs:enum->integer enum 'C))
+  (test-error "not num" #t
+              (bs:enum->integer enum 20)))
+
 (test-group "bs-class"
   (define %struct-a (bs:struct `((a ,int))))
   (define-bytestructure-class <struct-a> ()
