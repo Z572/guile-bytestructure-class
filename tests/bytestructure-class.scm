@@ -10,6 +10,24 @@
     (test-eqv "set #f" #f (begin (bytestructure-set! n #f)
                                  (bytestructure-ref n)))))
 
+(test-group "cstring-pointer*"
+  (test-equal #f (bytestructure-ref (bytestructure cstring-pointer*)))
+  (let* ((s "hh")
+         (bs (bytestructure
+              cstring-pointer* s))
+         (s2 "____"))
+    (test-equal s (bytestructure-ref
+                   (bytestructure
+                    cstring-pointer* s)))
+    (test-equal s2 (begin (bytestructure-set! bs s2)
+                          (bytestructure-ref bs)))
+    (test-equal #f (let ((b (bytestructure
+                             cstring-pointer*)))
+
+                     (bytestructure-set! b
+                                         #f)
+                     (bytestructure-ref b)))))
+
 (test-group "bs:enum"
   (define enum
     (bs:enum '((A 1)

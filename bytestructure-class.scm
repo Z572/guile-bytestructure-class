@@ -19,6 +19,7 @@
             get-bytestructure
 
             stdbool
+            cstring-pointer*
             bs:enum
             bs:enum->integer
             bs:unknow
@@ -73,6 +74,38 @@
   (field-alist enum-metadata-field-alist))
 
 ;;; enum
+
+(define cstring-pointer*
+  (let ()
+    (define size (bytestructure-descriptor-size intptr_t))
+    (define alignment (bytestructure-descriptor-alignment intptr_t))
+    (define unwrapper #f)
+    (define (getter syntax? bv offset)
+      (if syntax?
+          #`(let* ((address (bytestructure-ref* #,bv #,offset uintptr_t))
+                   (pointer (ffi:make-pointer address)))
+              (if (ffi:null-pointer? pointer)
+                  #f
+                  (ffi:pointer->string pointer)))
+          (let* ((address (bytestructure-ref* bv offset uintptr_t))
+                 (pointer (ffi:make-pointer address)))
+            (if (ffi:null-pointer? pointer)
+                #f
+                (ffi:pointer->string pointer)))))
+    (define (setter syntax? bv offset string)
+      (if syntax?
+          #`(bytestructure-set!* #,bv #,offset uintptr_t
+                                 #,(if string
+                                       (ffi:pointer-address
+                                        (ffi:string->pointer string))
+                                       0))
+          (bytestructure-set!*
+           bv offset uintptr_t
+           (if string
+               (ffi:pointer-address
+                (ffi:string->pointer string))
+               0))))
+    (make-bytestructure-descriptor size alignment unwrapper getter setter)))
 
 (define (bs:enum fields)
   (define alist (map

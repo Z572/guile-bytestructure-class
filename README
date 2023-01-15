@@ -21,7 +21,7 @@
   ;; (.listener-list (wrap-wl-signal a-pointer)) => return a <wl-list>.
 #+end_src
 
-* 3 new descriptor.
+* 4 new descriptor.
 ** bs:unknow
 use by descriptor only
 Can't use bytestructure-set! for it.
@@ -32,7 +32,14 @@ Can't use bytestructure-set! for it.
 #+begin_src scheme
   (define %wl-client-struct (bs:unknow))
 #+end_src
+** cstring-pointer*
 
+#+begin_src scheme
+  (define bs (bytestructure cstring-pointer*))
+  (bytestructure-ref bs) ;; => #f
+  (bytestructure-set! bs "hhh")
+  (bytestructure-ref bs);; => "hhh"
+#+end_src
 
 ** bs:enum
 
