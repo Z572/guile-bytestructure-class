@@ -246,7 +246,18 @@
         (let* ((is-pointer? field-descriptor
                             (haneld-pointer-descriptor field-descriptor))
                (ref-handle (if is-pointer? ffi:make-pointer identity))
-               (set-handle (if is-pointer? ffi:pointer-address identity))
+               (set-handle (if is-pointer? ffi:pointer-address
+                               (let ((field-descriptor-size
+                                      (bytestructure-descriptor-size
+                                       field-descriptor)))
+                                 (lambda (o)
+                                   (cond ((bytestructure? o)
+                                          (bytestructure-bytevector o))
+                                         ((ffi:pointer? o)
+                                          (ffi:pointer->bytevector
+                                           o
+                                           field-descriptor-size))
+                                         (else o))))))
                (b-class (delay (hashv-ref %bytestructures field-descriptor #f)))
                (wrap (delay (or (and=> (force b-class) .wrap) identity)))
                (unwrap (delay (or (and=> (force b-class) .unwrap) identity))))
