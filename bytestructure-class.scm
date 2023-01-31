@@ -175,8 +175,10 @@
   (wrap #:getter .wrap)
   (unwrap #:getter .unwrap))
 
+(define (bytestructure-descriptor->bs-class bd)
+  (hashv-ref %bytestructures bd #f))
 (define (bytestructure->bs-instance bs)
-  (and=> (hashv-ref %bytestructures (bytestructure-descriptor bs) #f)
+  (and=> (bytestructure-descriptor->bs-class (bytestructure-descriptor bs))
          (lambda (c)
            ((.wrap c) bs))))
 
@@ -219,15 +221,7 @@
       (force o)
       o))
 
-(define (haneld-pointer-descriptor o)
-  (let* ((metadata (bytestructure-descriptor-metadata o))
-         (is-pointer? (pointer-metadata? metadata)))
-    (values is-pointer? (if is-pointer?
-                            (force-or-nothing
-                             (pointer-metadata-content-descriptor
-                              metadata))
-                            o))))
-
+(define bd-meta bytestructure-descriptor-metadata)
 (define-method (compute-get-n-set (class <bytestructure-class>) slot)
   (if (eq? (slot-definition-allocation slot) #:bytestructure)
       (let* ((index (slot-ref class 'nfields))
@@ -243,41 +237,40 @@
           (goops-error "not field name'd `~S' found in class `~S' descriptor "
                        b-name class))
         (slot-set! class 'nfields (+ index 1))
-        (let* ((is-pointer? field-descriptor
-                            (haneld-pointer-descriptor field-descriptor))
-               (ref-handle (if is-pointer? ffi:make-pointer identity))
-               (set-handle (if is-pointer? ffi:pointer-address
-                               (let ((field-descriptor-size
-                                      (bytestructure-descriptor-size
-                                       field-descriptor)))
-                                 (lambda (o)
-                                   (cond ((bytestructure? o)
-                                          (bytestructure-bytevector o))
-                                         ((ffi:pointer? o)
-                                          (ffi:pointer->bytevector
-                                           o
-                                           field-descriptor-size))
-                                         (else o))))))
-               (b-class (delay (hashv-ref %bytestructures field-descriptor #f)))
-               (wrap (delay (or (and=> (force b-class) .wrap) identity)))
-               (unwrap (delay (or (and=> (force b-class) .unwrap) identity))))
+        (let* ((metadata (bd-meta field-descriptor))
+               (struct-d? (struct-metadata? metadata))
+               (pointer-d? (pointer-metadata? metadata))
+               (set-f (cond (struct-d? get-bytevector)
+                            (pointer-d?
+                             (lambda (o)
+                               (if o
+                                   (cond ((ffi:pointer? o) (ffi:pointer-address o))
+                                         ((bytestructure? o) (ffi:pointer-address (bytestructure->pointer o)))
+                                         ((bs-obj? o) (ffi:pointer-address (get-pointer o)))
+                                         ((integer? o) o))
+                                   0)))
+                            (else identity)))
+               (f-class (delay (bytestructure-descriptor->bs-class
+                                (force-or-nothing
+                                 (pointer-metadata-content-descriptor
+                                  metadata)))))
+               (wrap (delay (or (and (force f-class) (.wrap (force f-class))) identity)))
+               (get-f (cond (struct-d? bytestructure->bs-instance)
+                            (pointer-d?
+                             (lambda (o)
+                               ((force wrap) (ffi:make-pointer o))))
+                            (else identity))))
           (list (lambda (o)
-                  (let ((f (force wrap))
-                        (out (bytestructure-ref (get-bytestructure o) b-name)))
-                    (f (ref-handle (cond ((bytestructure? out)
-                                          (bytestructure->pointer out))
-                                         (else out))))))
+                  (get-f (bytestructure-ref (get-bytestructure o) b-name)))
                 (lambda (o v)
-                  (let ((f (force unwrap)))
-                    (bytestructure-set!
-                     (get-bytestructure o) b-name
-                     (set-handle (f v))))))))
+                  (bytestructure-set! (get-bytestructure o) b-name (set-f v))))))
       (next-method)))
 
 (define-class <bs> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer)
   #:metaclass <bytestructure-class>)
-
+(define (bs-obj? n)
+  (is-a? n <bs>))
 (define-method (initialize (object <bs>) initargs)
   (let ((descriptor(.descriptor (class-of object))))
     (if (get-keyword #:pointer initargs #f)
