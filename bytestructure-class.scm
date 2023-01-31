@@ -207,7 +207,7 @@
                            (symbol->string (class-name object))
                            " or #f")
                           o))
-                 (.pointer o))
+                 (bs-pointer o))
           ffi:%null-pointer))
     (slot-set! object 'wrap wrap)
     (slot-set! object 'unwrap unwrap)))
@@ -267,7 +267,7 @@
       (next-method)))
 
 (define-class <bs> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer)
+  (%pointer #:accessor bs-pointer #:init-keyword #:pointer)
   #:metaclass <bytestructure-class>)
 (define (bs-obj? n)
   (is-a? n <bs>))
@@ -284,8 +284,8 @@
 
 
 (define-method (equal? (f <bs>) (l <bs>))
-  (equal? (.pointer f)
-          (.pointer l)))
+  (equal? (bs-pointer f)
+          (bs-pointer l)))
 
 (define-method (get-bytestructure (obj <bs>))
   (and-let* ((class (class-of obj))
