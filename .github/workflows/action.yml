@@ -13,7 +13,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install GNU Guix
-      uses: PromyLOPh/guix-install-action@v1.3
-    - name: build
-      run: guix build --file=guix.scm
+    - name: install packages
+      run: sudo apt-get install -y guile-3.0-dev guile-bytestructures
+    - name: setenv
+      run: export LANG=C.UTF-8 TERM=dumb VERBOSE=true GUILE_AUTO_COMPILE=0
+    - name: bootstrap
+      run: ./bootstrap
+
+    - name: configure
+      run: ./configure
+
+    - name: Install dependencies
+      run: make -j
+
+    - name: Run check
+      run: make check -j
