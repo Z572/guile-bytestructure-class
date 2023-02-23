@@ -17,7 +17,7 @@ moddir=$(prefix)/share/guile/site/$(GUILE_EFFECTIVE_VERSION)
 godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache
 
 SOURCES =bytestructure-class.scm
-
+EXTRA_DIST= $(SOURCES) $(TESTS) build-aux/test-driver.scm
 TESTS = tests/bytestructure-class.scm
 
 TEST_EXTENSIONS = .scm
