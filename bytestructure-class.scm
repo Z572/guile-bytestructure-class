@@ -196,7 +196,7 @@
             (if (ffi:null-pointer? ptr)
                 #f
                 (or (hash-ref ptr->obj ptr)
-                    (let ((o (make object #:pointer ptr)))
+                    (let ((o (make object #:%pointer ptr)))
                       (hash-set! ptr->obj ptr o)
                       o)))))))
     (define (unwrap o)
@@ -267,19 +267,19 @@
       (next-method)))
 
 (define-class <bs> ()
-  (%pointer #:accessor bs-pointer #:init-keyword #:pointer)
+  (%pointer #:accessor bs-pointer #:init-keyword #:%pointer)
   #:metaclass <bytestructure-class>)
 (define (bs-obj? n)
   (is-a? n <bs>))
 (define-method (initialize (object <bs>) initargs)
   (let ((descriptor(.descriptor (class-of object))))
-    (if (get-keyword #:pointer initargs #f)
+    (if (get-keyword #:%pointer initargs #f)
         (next-method)
         (next-method
          object (append
-                 (list #:pointer (ffi:bytevector->pointer
-                                  (make-bytevector
-                                   (bytestructure-descriptor-size descriptor))))
+                 (list #:%pointer (ffi:bytevector->pointer
+                                   (make-bytevector
+                                    (bytestructure-descriptor-size descriptor))))
                  initargs)))))
 
 
