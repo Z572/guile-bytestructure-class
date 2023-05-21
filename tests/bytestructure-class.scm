@@ -1,4 +1,5 @@
 (define-module (tests bytestructure-class)
+  #:use-module (oop goops)
   #:use-module (bytestructure-class)
   #:use-module (bytestructures guile)
   #:use-module ((system foreign) #:prefix ffi:)
@@ -90,4 +91,16 @@
                              (.a struct-b-1)))
   (test-eqv "bytestructure->bs-instance"
     struct-b-1
-    (bytestructure->bs-instance (get-bytestructure struct-b-1))))
+    (bytestructure->bs-instance (get-bytestructure struct-b-1)))
+  (define %struct-c (bs:unknow))
+  (define %struct-d (bs:unknow))
+  (test-assert "bs:unknow not eq?" (not (eq? %struct-c %struct-d)))
+  (test-assert "bs:unknow not eqv?" (not (eqv? %struct-c %struct-d)))
+  (define-bytestructure-class <super-class-struct> ()
+    %struct-c wrap-sc unwrap-sc sc?)
+  (define-bytestructure-class <child-class-struct> (<super-class-struct>)
+    %struct-d wrap-cc unwrap-cc cc?)
+  (test-assert "wrap" (is-a? (wrap-cc (make <super-class-struct>)) <child-class-struct>))
+  (test-assert "wrap" (ffi:pointer? (unwrap-cc (wrap-cc (make <super-class-struct>)))))
+  (test-assert (ffi:pointer? (unwrap-sc (make <child-class-struct>))))
+  (test-error "wrap" (unwrap-cc (make <super-class-struct>))))

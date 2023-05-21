@@ -192,7 +192,9 @@
           (let ((ptr (cond ((bytestructure? obj) (bytestructure->pointer obj))
                            ((integer? obj) (ffi:make-pointer obj))
                            ((ffi:pointer? obj) obj)
-                           (else (goops-error "~S is not a pointer or bytestructure, integer" obj)))))
+                           ((member (class-of obj) (class-direct-supers object))
+                            => (lambda (o) ((.unwrap (car o)) obj)))
+                           (else (goops-error "~S is not a pointer, bytestructure, integer or superclass's object" obj)))))
             (if (ffi:null-pointer? ptr)
                 #f
                 (or (hash-ref ptr->obj ptr)
