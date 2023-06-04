@@ -12,7 +12,7 @@
 (define guile-bytestructure-class
   (package
     (name "guile-bytestructure-class")
-    (version "0.1")
+    (version "0.2.0")
     (source (local-file "." "guile-bytestructure-class-checkout"
                         #:recursive? #t
                         #:select? (git-predicate (dirname (current-filename)))))
