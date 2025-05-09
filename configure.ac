@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.13])
-AC_INIT([guile-bytestructure-class], [0.2.0], [873216071@qq.com])
+AC_INIT([guile-bytestructure-class], [0.2.0], [z572@z572.online])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_FILES([pre-inst-env], [chmod +x pre-inst-env])
 AC_CONFIG_FILES([Makefile])
