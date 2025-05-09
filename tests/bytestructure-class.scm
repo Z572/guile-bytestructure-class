@@ -22,12 +22,36 @@
                     cstring-pointer* s)))
     (test-equal s2 (begin (bytestructure-set! bs s2)
                           (bytestructure-ref bs)))
+    (test-equal "abc" (let ((o (bytestructure
+                                cstring-pointer* "abc")))
+                        (gc)
+                        (bytestructure-ref o)))
     (test-equal #f (let ((b (bytestructure
                              cstring-pointer*)))
 
                      (bytestructure-set! b
                                          #f)
                      (bytestructure-ref b)))))
+
+(define cs (bs:struct `((a ,cstring-pointer*))))
+(define-bytestructure-accessors cs
+  t-unwrap t-ref t-set!)
+
+(test-group "cstring-pointer*/syntax"
+  (test-equal "hello"
+    (let ((o (bytestructure-bytevector
+              (bytestructure
+               cs `((a "abc"))))))
+      (t-set! o a "hello")
+      (gc)
+      (t-ref o a)))
+  (test-assert
+      (let ((o (bytestructure-bytevector
+                (bytestructure
+                 cs `((a "abc"))))))
+        (t-set! o a #f)
+        (gc)
+        (equal? #f (t-ref o a)))))
 
 (test-group "bs:enum"
   (define enum

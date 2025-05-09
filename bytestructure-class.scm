@@ -75,6 +75,7 @@
 
 ;;; enum
 
+(define cstring-pointer*-mapping (make-weak-key-hash-table))
 (define cstring-pointer*
   (let ()
     (define size (bytestructure-descriptor-size intptr_t))
@@ -94,17 +95,25 @@
                 (ffi:pointer->string pointer)))))
     (define (setter syntax? bv offset string)
       (if syntax?
-          #`(bytestructure-set!* #,bv #,offset uintptr_t
-                                 #,(if string
-                                       (ffi:pointer-address
-                                        (ffi:string->pointer string))
-                                       0))
-          (bytestructure-set!*
-           bv offset uintptr_t
-           (if string
-               (ffi:pointer-address
-                (ffi:string->pointer string))
-               0))))
+          (let ((s (syntax->datum string)))
+            (if s
+                #`(let ((s (ffi:string->pointer #,string))
+                        (b #,bv))
+                    (hash-set! cstring-pointer*-mapping b s)
+                    (bytestructure-set!*
+                     b
+                     #,offset uintptr_t
+                     (ffi:pointer-address s)))
+                #`(bytestructure-set!*
+                   #,bv
+                   #,offset uintptr_t
+                   0)))
+          (let* ((p (and string (ffi:string->pointer string)))
+                 (pa (or (and=> p ffi:pointer-address)
+                         0)))
+            (hash-set! cstring-pointer*-mapping bv p)
+            (bytestructure-set!*
+             bv offset uintptr_t pa))))
     (make-bytestructure-descriptor size alignment unwrapper getter setter)))
 
 (define (bs:enum fields)
