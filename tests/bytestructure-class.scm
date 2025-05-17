@@ -125,6 +125,8 @@
   (define-bytestructure-class <child-class-struct> (<super-class-struct>)
     %struct-d wrap-cc unwrap-cc cc?)
   (test-assert "wrap" (is-a? (wrap-cc (make <super-class-struct>)) <child-class-struct>))
-  (test-assert "wrap" (ffi:pointer? (unwrap-cc (wrap-cc (make <super-class-struct>)))))
-  (test-assert (ffi:pointer? (unwrap-sc (make <child-class-struct>))))
-  (test-error "wrap" (unwrap-cc (make <super-class-struct>))))
+  (test-assert "wrap2" (ffi:pointer? (unwrap-cc (wrap-cc (make <super-class-struct>)))))
+  (test-assert "unwrap-1" (ffi:pointer? (unwrap-sc (make <child-class-struct>))))
+  (test-error
+   "unwrap: fail" 'misc-error
+   (unwrap-cc (make <super-class-struct>))))
